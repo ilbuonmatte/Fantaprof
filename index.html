@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IL FANTAPROF</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LOADING
+============================================================ -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-badge">
+    <span class="loading-star">⭐</span>
+    <span>IL FANTAPROF</span>
+  </div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- ============================================================
+     LOGIN
+============================================================ -->
+<div id="loginScreen" class="screen hidden">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">⭐</div>
+      <h1>IL FANTAPROF</h1>
+      <p class="login-tag">Il fantacampionato della classe</p>
+    </div>
+    <form id="loginForm" autocomplete="off">
+      <label class="field">
+        <span>Nome utente</span>
+        <input type="text" id="loginUsername" placeholder="es. mario.rossi" required>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </label>
+      <p id="loginError" class="form-error hidden"></p>
+      <button type="submit" class="btn btn-primary btn-block">Entra in campo</button>
+    </form>
+    <p class="login-footnote">Le credenziali sono assegnate dall'organizzatore del campionato.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SETUP INIZIALE (solo al primissimo avvio, DB vuoto)
+============================================================ -->
+<div id="setupScreen" class="screen hidden">
+  <div class="login-card setup-card">
+    <div class="login-brand">
+      <div class="login-logo">🎓</div>
+      <h1>Configurazione iniziale</h1>
+      <p class="login-tag">Il database è vuoto: crea il tuo account amministratore</p>
+    </div>
+    <form id="setupForm" autocomplete="off">
+      <label class="field">
+        <span>Nome utente admin</span>
+        <input type="text" id="setupUsername" required>
+      </label>
+      <label class="field">
+        <span>Password admin</span>
+        <input type="password" id="setupPassword" required>
+      </label>
+      <p id="setupError" class="form-error hidden"></p>
+      <button type="submit" class="btn btn-primary btn-block">Crea account amministratore</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL (studente)
+============================================================ -->
+<div id="appShell" class="screen hidden">
+
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-star">⭐</span>
+      <span>FANTAPROF</span>
+    </div>
+    <div class="topbar-user" id="topbarUser">
+      <img id="topbarAvatar" class="avatar avatar-sm" src="" alt="">
+      <div class="topbar-user-info">
+        <strong id="topbarTeamName">—</strong>
+        <span id="topbarStudentName">—</span>
+      </div>
+    </div>
+    <button id="btnAdminPanel" class="btn btn-ghost btn-sm hidden">Pannello Admin</button>
+    <button id="btnLogout" class="btn btn-ghost btn-sm">Esci</button>
+  </header>
+
+  <div id="newsBanner" class="news-banner hidden">
+    <span class="news-icon">📢</span>
+    <span id="newsText"></span>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="roster">La mia rosa</button>
+    <button class="tab-btn" data-tab="rankStudents">Classifica studenti</button>
+    <button class="tab-btn" data-tab="rankProfs">Classifica prof</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- TAB: LA MIA ROSA -->
+    <section id="tab-roster" class="tab-panel active">
+
+      <div id="rosterLockedView" class="hidden">
+        <div class="card summary-card">
+          <div class="summary-team">
+            <img id="myAvatarBig" class="avatar avatar-lg" src="" alt="">
+            <div>
+              <h2 id="myTeamName">—</h2>
+              <p id="myStudentName" class="muted">—</p>
+            </div>
+          </div>
+          <div class="summary-points">
+            <span id="myTotalPoints">0</span>
+            <small>PUNTI TOTALI</small>
+          </div>
+        </div>
+
+        <div id="captainWindowBanner" class="captain-banner"></div>
+
+        <div class="card">
+          <h3 class="card-title">I miei 6 professori</h3>
+          <div id="myRosterGrid" class="prof-grid"></div>
+        </div>
+      </div>
+
+      <div id="rosterBuilderView" class="hidden">
+        <div class="card builder-header">
+          <h2>Costruisci la tua rosa</h2>
+          <p class="muted">Seleziona esattamente 6 professori e assegna la fascia da capitano ⭐</p>
+          <div class="budget-bar">
+            <div class="budget-bar-fill" id="budgetBarFill"></div>
+          </div>
+          <div class="budget-info">
+            <span>Crediti spesi: <strong id="budgetSpent">0</strong> / 100</span>
+            <span>Selezionati: <strong id="pickedCount">0</strong> / 6</span>
+          </div>
+          <p id="rosterError" class="form-error hidden"></p>
+          <button id="btnSaveRoster" class="btn btn-primary btn-block" disabled>Blocca la rosa</button>
+        </div>
+        <div id="marketGrid" class="prof-grid"></div>
+      </div>
+
+    </section>
+
+    <!-- TAB: CLASSIFICA STUDENTI -->
+    <section id="tab-rankStudents" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Classifica studenti</h3>
+        <div id="studentRanking" class="ranking-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB: CLASSIFICA PROF -->
+    <section id="tab-rankProfs" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Classifica professori</h3>
+        <div id="profRanking" class="ranking-list"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     PANNELLO ADMIN
+============================================================ -->
+<div id="adminShell" class="screen hidden">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-star">🛠️</span>
+      <span>PANNELLO ADMIN</span>
+    </div>
+    <div style="flex:1"></div>
+    <button id="btnBackToApp" class="btn btn-ghost btn-sm">Torna al gioco</button>
+    <button id="btnAdminLogout" class="btn btn-ghost btn-sm">Esci</button>
+  </header>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-admintab="points">Assegna punti</button>
+    <button class="tab-btn" data-admintab="market">Mercato capitano</button>
+    <button class="tab-btn" data-admintab="students">Studenti</button>
+    <button class="tab-btn" data-admintab="profs">Professori</button>
+    <button class="tab-btn" data-admintab="history">Storico eventi</button>
+    <button class="tab-btn" data-admintab="export">Backup</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ASSEGNA PUNTI -->
+    <section id="admin-points" class="tab-panel active">
+      <div class="card">
+        <h3 class="card-title">Assegnazione punti rapida</h3>
+        <form id="pointsForm">
+          <label class="field">
+            <span>Professore</span>
+            <select id="pointsProf" required></select>
+          </label>
+          <label class="field">
+            <span>Punti (usa il segno − per il malus)</span>
+            <input type="number" id="pointsValue" placeholder="es. 10 oppure -5" required>
+          </label>
+          <label class="field">
+            <span>Descrizione (1 riga)</span>
+            <input type="text" id="pointsDesc" maxlength="80" placeholder="es. Battuta sulle equazioni in classe" required>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Assegna punti</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- MERCATO CAPITANO -->
+    <section id="admin-market" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Mercato straordinario capitano</h3>
+        <p class="muted">Fuori dal 1° giorno del mese, il cambio capitano è bloccato. Usa questo interruttore per aprirlo manualmente durante le vacanze (Carnevale, Pasqua, ecc.).</p>
+        <div class="switch-row">
+          <span id="marketStatusLabel">Mercato straordinario: <strong>chiuso</strong></span>
+          <label class="switch">
+            <input type="checkbox" id="marketToggle">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENTI -->
+    <section id="admin-students" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Aggiungi studente</h3>
+        <form id="addStudentForm">
+          <div class="form-row">
+            <label class="field">
+              <span>Nome utente</span>
+              <input type="text" id="newStudentUsername" required>
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input type="text" id="newStudentPassword" required>
+            </label>
+          </div>
+          <div class="form-row">
+            <label class="field">
+              <span>Nome studente</span>
+              <input type="text" id="newStudentName" required>
+            </label>
+            <label class="field">
+              <span>Nome squadra</span>
+              <input type="text" id="newStudentTeam" required>
+            </label>
+          </div>
+          <label class="field">
+            <span>URL foto profilo (facoltativo)</span>
+            <input type="url" id="newStudentPhoto" placeholder="https://...">
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Crea studente</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Gestione password</h3>
+        <form id="resetPasswordForm">
+          <label class="field">
+            <span>Studente</span>
+            <select id="resetPasswordStudent" required></select>
+          </label>
+          <label class="field">
+            <span>Nuova password</span>
+            <input type="text" id="resetPasswordValue" required>
+          </label>
+          <button type="submit" class="btn btn-secondary btn-block">Aggiorna password</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Elenco studenti</h3>
+        <div id="studentsAdminList" class="admin-list"></div>
+      </div>
+    </section>
+
+    <!-- PROFESSORI -->
+    <section id="admin-profs" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Aggiungi professore al listino</h3>
+        <form id="addProfForm">
+          <div class="form-row">
+            <label class="field">
+              <span>Nome professore</span>
+              <input type="text" id="newProfName" required>
+            </label>
+            <label class="field">
+              <span>Materia</span>
+              <input type="text" id="newProfSubject" required>
+            </label>
+          </div>
+          <label class="field">
+            <span>Prezzo (crediti)</span>
+            <input type="number" id="newProfPrice" min="1" max="100" required>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Aggiungi al listino</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Listino professori</h3>
+        <div id="profsAdminList" class="admin-list"></div>
+      </div>
+    </section>
+
+    <!-- STORICO -->
+    <section id="admin-history" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Storico eventi</h3>
+        <div id="eventsHistoryList" class="history-list"></div>
+      </div>
+    </section>
+
+    <!-- EXPORT -->
+    <section id="admin-export" class="tab-panel">
+      <div class="card">
+        <h3 class="card-title">Export / Backup dati</h3>
+        <p class="muted">Scarica i file di backup strutturati in formato JSON o CSV.</p>
+        <div class="export-grid">
+          <button class="btn btn-secondary" id="exportCredentials">Credenziali (CSV)</button>
+          <button class="btn btn-secondary" id="exportRosters">Rose squadre (JSON)</button>
+          <button class="btn btn-secondary" id="exportHistory">Storico eventi (JSON)</button>
+          <button class="btn btn-secondary" id="exportRankings">Classifiche (CSV)</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     MODAL PROFILO COMPAGNO
+============================================================ -->
+<div id="profileModal" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" id="closeProfileModal">✕</button>
+    <div class="modal-header">
+      <img id="modalAvatar" class="avatar avatar-lg" src="" alt="">
+      <div>
+        <h2 id="modalTeamName">—</h2>
+        <p id="modalStudentName" class="muted">—</p>
+      </div>
+    </div>
+    <div class="modal-points">
+      <span id="modalTotalPoints">0</span>
+      <small>PUNTI TOTALI</small>
+    </div>
+    <div id="modalRosterGrid" class="prof-grid"></div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
